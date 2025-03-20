@@ -6,3 +6,10 @@ struct Value{};
 
 template <typename... D>
 struct Output{};
+
+enum Belong {
+    DataVariable,
+    ValueVariable,
+    OutputVariable,
+    Default
+};

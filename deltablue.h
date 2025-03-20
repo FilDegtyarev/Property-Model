@@ -1,5 +1,6 @@
+#pragma once
 #include <functional>
-#include "constraint.cpp"
+#include "Constraint.h"
 
 class DeltaBlue {
 public:
