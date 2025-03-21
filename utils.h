@@ -13,3 +13,5 @@ enum Belong {
     OutputVariable,
     Default
 };
+
+const int INF = 1e9;

@@ -29,9 +29,20 @@ public:
 
     Constraint(std::vector<Variable*> variables, int priority, bool enable, bool stay);
 
-    void satisfy(int method_index);
+    const std::vector<Variable*>& variables() const;
+    std::vector<Variable*> variables();
+    
+    const std::vector<std::unique_ptr<Method>>& methods() const;
+    
+    void enable();
 
-    const Method* operator[](int index);
+    void satisfy(int method_index);
+    void satisfy(Method* method);
+
+    void unsatisfy();
+    
+    const Method* operator[](int index) const;
+    Method* operator[](int index);
 
     bool is_stay() const;
 

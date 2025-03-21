@@ -5,6 +5,13 @@ void Constraint::add_method(std::unique_ptr<Method>&& method) {
     methods_.push_back(std::move(method));
 }
 
+const std::vector<Variable*>& Constraint::variables() const { return variables_; }
+std::vector<Variable*> Constraint::variables() { return variables_; }
+
+const std::vector<std::unique_ptr<Method>>& Constraint::methods() const { return methods_; }
+
+void Constraint::enable() { status_ = Status::type{status_ | Status::enabled}; }
+
 Constraint::Constraint(std::vector<Variable*> variables, int priority, bool enable, bool stay) {
     status_ = Status::type((Status::type::enabled & enable) | (Status::type::stay & stay));
     variables_ = variables;
@@ -17,7 +24,18 @@ void Constraint::satisfy(int method_index) {
     methods_[method_index].get()->satisfy_method(); 
 }
 
-const Method* Constraint::operator[](int index) { return methods_[index].get(); }
+void Constraint::satisfy(Method* method) {
+    selected_method_ = method;
+    method->satisfy_method();
+}
+
+void Constraint::unsatisfy() {
+    selected_method_->unsatisfy_method();
+}
+
+const Method* Constraint::operator[](int index) const { return methods_[index].get(); }
+
+Method* Constraint::operator[](int index) { return methods_[index].get(); }
 
 bool Constraint::is_stay() const { return status_ & Status::stay; }
 

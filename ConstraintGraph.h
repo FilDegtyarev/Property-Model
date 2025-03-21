@@ -16,7 +16,13 @@ public:
 
     void add_constraint(std::unique_ptr<Constraint>&& constraint);
 
+    const Constraint* operator[](int index) const;
+    Constraint* operator[](int index);
+
+    void define_by_stay(Variable* variable);
 private:
     std::vector<std::unique_ptr<Variable>> variables_;
     std::vector<std::unique_ptr<Constraint>> constraints_;
+
+    std::unordered_map<Variable*, Constraint*> stay_constraint_table_;
 };

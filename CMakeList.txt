@@ -1,6 +1,0 @@
-cmake_minimum_required(VERSION 3.10.0)
-project(test VERSION 0.1.0 LANGUAGES C CXX)
-
-
-add_executable(test Constraint.cpp ConstraintGraph.cpp Method.cpp test.cpp Variable.cpp)
-target_compile_features(test PUBLIC cxx_std_20)
