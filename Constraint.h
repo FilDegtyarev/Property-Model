@@ -40,16 +40,28 @@ public:
     void satisfy(Method* method);
 
     void unsatisfy();
-    
+    void disable();
+        
     const Method* operator[](int index) const;
     Method* operator[](int index);
 
     bool is_stay() const;
+    bool is_enable() const;
+    bool is_satisfied() const;
 
     int priority() const;
 
     const Method* selected_method() const;
 
+    static std::unique_ptr<Constraint> make_stay_constraint(Variable* variable, int priority) {
+        std::vector<Variable*> stay_variable = {variable};
+        std::unique_ptr<Constraint> new_stay = std::make_unique<Constraint>(stay_variable, priority, true, true);
+
+        std::function<void()> stay_function = [](){ return; };
+        new_stay->add_method(std::make_unique<Method>(stay_function, std::vector<Variable*>(), stay_variable, new_stay.get()));
+
+        return new_stay;
+    }
 private:
     std::vector<std::unique_ptr<Method>> methods_;
     std::vector<Variable*> variables_;

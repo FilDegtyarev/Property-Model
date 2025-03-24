@@ -11,6 +11,7 @@ std::vector<Variable*> Constraint::variables() { return variables_; }
 const std::vector<std::unique_ptr<Method>>& Constraint::methods() const { return methods_; }
 
 void Constraint::enable() { status_ = Status::type{status_ | Status::enabled}; }
+void Constraint::disable() { status_ = Status::type{status_ & Status::stay}; }
 
 Constraint::Constraint(std::vector<Variable*> variables, int priority, bool enable, bool stay) {
     status_ = Status::type((Status::type::enabled & enable) | (Status::type::stay & stay));
@@ -38,6 +39,8 @@ const Method* Constraint::operator[](int index) const { return methods_[index].g
 Method* Constraint::operator[](int index) { return methods_[index].get(); }
 
 bool Constraint::is_stay() const { return status_ & Status::stay; }
+bool Constraint::is_enable() const { return status_ & Status::enabled; }
+bool Constraint::is_satisfied() const { return status_ & Status::satisfied; }
 
 int Constraint::priority() const { return priority_; }
 

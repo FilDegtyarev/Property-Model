@@ -36,12 +36,12 @@ public:
     }
 
     PropertyModel_&& extract() {
-        //property_model_->initialize_stay_constraints();
-        //property_model_->initialize_solution_graph();
+        property_model_->add_stay_constraints();
+        property_model_->prepare_solution_graph();
         return std::move(property_model_);
     }
 private:
-    static std::unique_ptr<Implementation> make_default_implementation() {
+    std::unique_ptr<Implementation> make_default_implementation() {
         return std::unique_ptr<Implementation>(new Implementation());
     }
     PropertyModel_ property_model_ = make_default_implementation();

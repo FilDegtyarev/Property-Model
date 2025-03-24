@@ -1,6 +1,9 @@
 #include "Deltablue.h"
+#include <memory>
 #include <stdexcept>
+#include <unordered_map>
 
+// ПЕРЕДЕЛАТЬ
 void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unordered_map<Variable*, bool>& visited) {
     visited[from] = true;
     // from определена кем-то. Сила from = max(constraint, possible outputs)
@@ -14,7 +17,7 @@ void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unor
 
     from->force_ = new_force;
 
-    for (Method* output_method : from->ouput_edges) {
+    for (Method* output_method : from->edged_to_methods_) {
         Variable* to = output_method->outputs()[0];
         if (!visited[to]) {
             DeltaBlue::recalculate_forces(g, to, visited);
@@ -25,7 +28,7 @@ void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unor
 void DeltaBlue::detect_cycle(ConstraintGraph& g, Variable* from, std::unordered_map<Variable*, int>& visited) {
     visited[from] = 1;
 
-    for (Method* output : from->ouput_edges) {
+    for (Method* output : from->edged_to_methods_) {
         Variable* to = output->outputs()[0];
 
         if (visited[to] == 1) {
@@ -85,11 +88,48 @@ void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
     }
     
     DeltaBlue::reverse_path(g, chosen_method->outputs()[0]);
-    
+    g[index]->satisfy(chosen_method);
+
     std::unordered_map<Variable*, int> cycle_visited;
     DeltaBlue::detect_cycle(g, chosen_method->outputs()[0], cycle_visited);
 
     std::unordered_map<Variable*, bool> visited;
     DeltaBlue::recalculate_forces(g, chosen_method->outputs()[0], visited);
 
+}
+
+void DeltaBlue::disable_stay(ConstraintGraph& g, int index) {
+    std::unique_ptr<Constraint> new_stay = Constraint::make_stay_constraint(g[index]->variables()[0], g.new_stay_priority());
+    g.constraints_.push_back(new_stay);
+    DeltaBlue::enable_constraint(g, g.constraints_.size() - 1);
+
+    g.constraints_[index] = std::move(g.constraints_.back());
+    g.stay_constraint_table_[g[index]->variables()[0]] = g.constraints_[index].get();
+    g.constraints_.pop_back();
+}
+
+void DeltaBlue::disable_constraint(ConstraintGraph& g, int index) {
+    if (g[index]->is_stay()) {
+        disable_stay(g, index);
+        return;
+    }
+
+    if (!g[index]->is_satisfied()) {
+        g[index]->disable();
+        return;
+    }
+
+    g[index]->unsatisfy();
+    Variable* not_defined = g[index]->variables()[0];
+    g.define_by_stay(not_defined);
+
+    std::unordered_map<Variable*, bool> visited;
+    DeltaBlue::recalculate_forces(g, not_defined, visited);
+
+    // TODO! Умное добавление ограничения
+    for (int constraint_index = 0; constraint_index < g.constraints_count(); ++constraint_index) {
+        if (g[constraint_index]->is_enable() && !g[constraint_index]->is_satisfied()) {
+            DeltaBlue::enable_constraint(g, constraint_index);
+        }
+    }
 }

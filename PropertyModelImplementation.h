@@ -1,5 +1,6 @@
 #pragma once
 #include "ConstraintGraph.h"
+#include "Deltablue.h"
 template <typename A, typename B, typename C>
 class PMBuilder;
 
@@ -28,8 +29,12 @@ public:
 
         std::cout << "Output:\n";
         int i = 0;
-        ((std::cout << '\t' << output_[i] << ": " 
-        << std::any_cast<OutputArgs>(variables_[output_[i++]]->value()) << '\n'), ...);
+        if (std::is_same_v<OutputArgs..., std::pair<int, int>>) {
+            std::pair<int, int> c = std::any_cast<std::pair<int, int>>(variables_[output_[i++]]->value());
+            std::cout << '\t' << output_[i] << ": " << c.first << " " << c.second << '\n';
+        } else {
+            //((std::cout << '\t' << output_[i] << ": " << std::any_cast<OutputArgs>(variables_[output_[i++]]->value()) << '\n'), ...);
+        }
         std::cout << "-----------------------------\n";
     }
 
@@ -38,9 +43,7 @@ private:
 
     template <Belong B, typename T>
     void add_variable(std::string name, T value) {
-        /// ГДЕ ЛУЧШЕ АЛЛОЦИРОВАТЬ VARIABLE???
-        //Variable* pointer = constraint_graph.add_variable(B, name, value);
-        Variable* pointer = constraint_graph.add_variable(B, name, value);
+        Variable* pointer = constraint_graph_.add_variable(B, name, value);
         variables_.insert({name, pointer});
         switch (B) {
             case Belong::DataVariable:
@@ -92,38 +95,40 @@ private:
     }
 
     void add_constraint(std::unique_ptr<Constraint>&& constraint) {
-        constraint_graph.add_constraint(std::move(constraint));
+        constraint_graph_.add_constraint(std::move(constraint));
     }
 
-    // void initialize_stay_constraints() {
-    //     int stay_priority = constraints_.size() + 1;
-    //     for (auto& [name, variable]: variables_) {
-    //         add_constraint({name}, stay_priority++, true, true);
-    //         std::function<std::tuple<>()> stay_execution = [](){return std::tuple<>();};
-    //         add_method(stay_execution, {}, {name});
-    //     }
+    template <typename T>
+    void set(std::string name, T value) {
+        Variable* variable = variables_[name];
+        // Подключили stay
+        DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_stay(variable));
 
-    //     for (Constraint& constraint: constraints_) {
-    //         if (constraint.is_stay()) {
-    //             constraint.satisfy(0);   
-    //         }
-    //     }
-    // }
+        variable->load_data(std::move(value));
+        constraint_graph_.update_values();
+    }
 
-    // void initialize_solution_graph() {
-    //     int i = 0;
-    //     for (Constraint& constraint: constraints_) {
-    //         if (constraint.is_stay()) {
-    //             //update_force(this, i);
-    //         }
-    //         ++i;
-    //     }
-    // }
+    void add_stay_constraints() {
+        for (auto&& [name, variable] : variables_) {
+            constraint_graph_.add_constraint(Constraint::make_stay_constraint(variable, constraint_graph_.new_stay_priority()));
+            constraint_graph_.define_by_stay(variable);
+        }
+    }
+
+    void prepare_solution_graph() {
+        for (int constraint_index = 0; constraint_index < constraint_graph_.constraints_count(); ++constraint_index) {
+            Constraint* current_constraint = constraint_graph_[constraint_index];
+            if (current_constraint->is_enable() && !current_constraint->is_stay()) {
+                DeltaBlue::enable_constraint(constraint_graph_, constraint_index);
+            }
+        }
+    }
+
     std::vector<std::string> data_;
     std::vector<std::string> value_;
     std::vector<std::string> output_;
     
     std::unordered_map<std::string, Variable*> variables_;
 
-    ConstraintGraph constraint_graph;
+    ConstraintGraph constraint_graph_;
 };

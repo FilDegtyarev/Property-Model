@@ -30,10 +30,15 @@ struct Variable {
     Constraint* defining_constraint();
 
     const Method* const defining_method() const;
+    Method* defining_method();
+    const std::vector<Method*>& edges() const;
+
+    void add_edge_to(Method* method);
+    void remove_edge_to(Method* method);
 private:
     Belong belong_;
     std::any data_;
     Method* determined_by;
     int force_ = INF;
-    std::vector<Method*> ouput_edges;
+    std::vector<Method*> edged_to_methods_;
 };

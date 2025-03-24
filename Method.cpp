@@ -15,11 +15,19 @@ void Method::satisfy_method() {
     for (Variable* variable : outputs_) {
         variable->determine(this);
     }
+
+    for (Variable* variable : inputs_) {
+        variable->add_edge_to(this);
+    }
 }
 
 void Method::unsatisfy_method() {
     for (Variable* variable : outputs_) {
         variable->determine(nullptr);
+    }
+
+    for (Variable* variable : inputs_) {
+        variable->remove_edge_to(this);
     }
 }
 

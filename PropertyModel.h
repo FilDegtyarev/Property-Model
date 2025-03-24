@@ -25,7 +25,9 @@ public:
     }
 
     template <typename T>
-    void set(std::string name, T value);
+    void set(std::string name, T value) {
+        impl_.get()->set(name, value);
+    }
 
 private:
     PropertyModel() = default;
