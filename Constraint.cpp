@@ -14,13 +14,15 @@ void Constraint::enable() { status_ = Status::type{status_ | Status::enabled}; }
 void Constraint::disable() { status_ = Status::type{status_ & Status::stay}; }
 
 Constraint::Constraint(std::vector<Variable*> variables, int priority, bool enable, bool stay) {
-    status_ = Status::type((Status::type::enabled & enable) | (Status::type::stay & stay));
+    status_ = Status::type(0);
+    if (enable) status_ = Status::type(status_ | Status::type::enabled);
+    if (stay) status_ = Status::type(status_ | Status::type::stay);
     variables_ = variables;
     priority_ = priority;
 }
 
 void Constraint::satisfy(int method_index) {
-    assert(!(status_ & Status::enabled));
+    assert(!(status_ & Status::satisfied));
     selected_method_ = methods_[method_index].get();
     methods_[method_index].get()->satisfy_method(); 
 }

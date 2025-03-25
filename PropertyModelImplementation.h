@@ -29,13 +29,31 @@ public:
 
         std::cout << "Output:\n";
         int i = 0;
-        if (std::is_same_v<OutputArgs..., std::pair<int, int>>) {
-            std::pair<int, int> c = std::any_cast<std::pair<int, int>>(variables_[output_[i++]]->value());
-            std::cout << '\t' << output_[i] << ": " << c.first << " " << c.second << '\n';
-        } else {
-            //((std::cout << '\t' << output_[i] << ": " << std::any_cast<OutputArgs>(variables_[output_[i++]]->value()) << '\n'), ...);
-        }
+        ((std::cout << '\t' << output_[i] << ": " << std::any_cast<OutputArgs>(variables_[output_[i++]]->value()) << '\n'), ...);
         std::cout << "-----------------------------\n";
+    }
+
+    template <typename T>
+    void set(std::string name, T value) {
+        // Этой строчки нет в финальной версии
+        std::cout << name << " -> " << value << '\n';
+        Variable* variable = variables_[name];
+        // Подключили stay
+        DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_stay(variable));
+
+        variable->load_data(std::move(value));
+        constraint_graph_.update_values();
+    }
+
+    // readme
+    void rough_enable(int index) {
+        DeltaBlue::enable_constraint(constraint_graph_, index);
+        constraint_graph_.update_values();
+    }
+
+    void rough_disable(int index) {
+        DeltaBlue::disable_constraint(constraint_graph_, index);
+        constraint_graph_.update_values();
     }
 
 private:
@@ -98,21 +116,12 @@ private:
         constraint_graph_.add_constraint(std::move(constraint));
     }
 
-    template <typename T>
-    void set(std::string name, T value) {
-        Variable* variable = variables_[name];
-        // Подключили stay
-        DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_stay(variable));
-
-        variable->load_data(std::move(value));
-        constraint_graph_.update_values();
-    }
-
     void add_stay_constraints() {
         for (auto&& [name, variable] : variables_) {
             constraint_graph_.add_constraint(Constraint::make_stay_constraint(variable, constraint_graph_.new_stay_priority()));
             constraint_graph_.define_by_stay(variable);
         }
+        return;
     }
 
     void prepare_solution_graph() {

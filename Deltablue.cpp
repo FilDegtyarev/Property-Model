@@ -44,6 +44,7 @@ void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
     // det_cst -> from -> ???
     int end_force = from->force_;
     Variable* current_variable = from;
+    std::vector<Method*> path;
     while (true) {
         if (current_variable->defining_constraint()->priority() == end_force) {
             current_variable->defining_constraint()->unsatisfy();
@@ -51,21 +52,26 @@ void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
             break;
         }
 
-        // Current обладает possible output силой равной end_force
         for (const std::unique_ptr<Method>& method_ptr : current_variable->defining_constraint()->methods()) {
             Method* method = method_ptr.get();
             if (method->outputs()[0]->force_ == end_force && (!method->is_chosen())) {
-                method->associated_constraint()->unsatisfy();
-                method->associated_constraint()->satisfy(method);
                 current_variable = method->outputs()[0];
+                path.push_back(method);
                 break;
             }
         }
     }
+    
+    std::reverse(path.begin(), path.end());
+    for (Method* method : path) {
+        method->associated_constraint()->unsatisfy();
+        method->associated_constraint()->satisfy(method);
+    }
+
+    return;
 }
 
 void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
-    // Blocked???
     Constraint* new_constraint = g[index];
     bool is_blocked = false;
     for (Variable* variable : new_constraint->variables()) {
@@ -73,9 +79,8 @@ void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
             is_blocked = true;
         }
     }
-    // Is not blocked
+
     if (!is_blocked) {
-        // Добавили в "Constraint Graph"
         new_constraint->enable();
         return;
     }
@@ -100,7 +105,7 @@ void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
 
 void DeltaBlue::disable_stay(ConstraintGraph& g, int index) {
     std::unique_ptr<Constraint> new_stay = Constraint::make_stay_constraint(g[index]->variables()[0], g.new_stay_priority());
-    g.constraints_.push_back(new_stay);
+    g.constraints_.push_back(std::move(new_stay));
     DeltaBlue::enable_constraint(g, g.constraints_.size() - 1);
 
     g.constraints_[index] = std::move(g.constraints_.back());
@@ -126,7 +131,6 @@ void DeltaBlue::disable_constraint(ConstraintGraph& g, int index) {
     std::unordered_map<Variable*, bool> visited;
     DeltaBlue::recalculate_forces(g, not_defined, visited);
 
-    // TODO! Умное добавление ограничения
     for (int constraint_index = 0; constraint_index < g.constraints_count(); ++constraint_index) {
         if (g[constraint_index]->is_enable() && !g[constraint_index]->is_satisfied()) {
             DeltaBlue::enable_constraint(g, constraint_index);

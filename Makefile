@@ -1,5 +1,7 @@
-build:
-    g++ -std=c++20 test.cpp Constraint.cpp ConstraintGraph.cpp  Method.cpp Variable.cpp -o test
-
+.PHONY: clean dialog
 dialog:
-	g++ -std=c++20 dialog.cpp Constraint.cpp ConstraintGraph.cpp  Method.cpp Variable.cpp Deltablue.cpp -o dialog
+	g++ -g -std=c++20 dialog.cpp Constraint.cpp ConstraintGraph.cpp  Method.cpp Variable.cpp Deltablue.cpp -o dialog
+	./dialog
+
+clean:
+	rm dialog

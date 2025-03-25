@@ -9,7 +9,7 @@ public:
 
     template <typename T>
     Variable* add_variable(Belong b, std::string name, T value) {
-        std::unique_ptr<Variable> variable = std::make_unique<Variable>(b, std::move(value));
+        std::unique_ptr<Variable> variable = std::make_unique<Variable>(b, name, std::move(value));
         Variable* pointer = variable.get();
         variables_.push_back(std::move(variable));
         return pointer;

@@ -7,20 +7,23 @@
 struct Method;
 class Constraint;
 class DeltaBlue;
+class ConstraintGraph;
 
 struct Variable {
     friend DeltaBlue;
+    friend ConstraintGraph;
+
     Variable() = default;
 
     template <typename T>
-    Variable(Belong belong, T&& data): belong_(belong), data_(data) {};
+    Variable(Belong belong, std::string name, T&& data): belong_(belong), name_(name), data_(data) {};
 
     void determine(Method* method);
 
     const std::any& value() const;
 
     int force() const;
-    
+
     template <typename T>
     void load_data(T&& value) {
         data_ = value;
@@ -37,6 +40,7 @@ struct Variable {
     void remove_edge_to(Method* method);
 private:
     Belong belong_;
+    std::string name_;
     std::any data_;
     Method* determined_by;
     int force_ = INF;

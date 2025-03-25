@@ -25,6 +25,7 @@ public:
 
         std::vector<Variable*> refs = property_model_->bind_variables(variables);
         current_constraint_ = std::make_unique<Constraint>(refs, priority, enable, false);
+        return;
     }
 
     template <typename... Types, typename... OutputTypes>
@@ -33,9 +34,14 @@ public:
         std::vector<Variable*> input_refs = property_model_->bind_variables(inputs);
         std::vector<Variable*> output_refs = property_model_->bind_variables(outputs);
         current_constraint_.get()->add_method(std::make_unique<Method>(method, input_refs, output_refs, current_constraint_.get()));
+        return;
     }
 
     PropertyModel_&& extract() {
+        if (current_constraint_ != nullptr) {
+            property_model_->add_constraint(std::move(current_constraint_));
+        }
+
         property_model_->add_stay_constraints();
         property_model_->prepare_solution_graph();
         return std::move(property_model_);

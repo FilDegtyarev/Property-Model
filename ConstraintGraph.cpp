@@ -15,6 +15,7 @@ Constraint* ConstraintGraph::operator[](int index) { return constraints_[index].
 
 void ConstraintGraph::define_by_stay(Variable* variable) {
     stay_constraint_table_[variable]->satisfy(0);
+    variable->force_ = stay_constraint_table_[variable]->priority();
 }
 
 int ConstraintGraph::constraints_count() const { return constraints_.size(); }
