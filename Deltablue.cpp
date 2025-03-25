@@ -3,10 +3,8 @@
 #include <stdexcept>
 #include <unordered_map>
 
-// ПЕРЕДЕЛАТЬ
 void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unordered_map<Variable*, bool>& visited) {
     visited[from] = true;
-    // from определена кем-то. Сила from = max(constraint, possible outputs)
     int new_force = from->defining_constraint()->priority();
 
     for (const std::unique_ptr<Method>& method : from->defining_constraint()->methods()) {
@@ -41,7 +39,6 @@ void DeltaBlue::detect_cycle(ConstraintGraph& g, Variable* from, std::unordered_
 }
 
 void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
-    // det_cst -> from -> ???
     int end_force = from->force_;
     Variable* current_variable = from;
     std::vector<Method*> path;

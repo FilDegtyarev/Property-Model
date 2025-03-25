@@ -2,7 +2,6 @@
 
 void ConstraintGraph::add_constraint(std::unique_ptr<Constraint>&& constraint) {
     if (constraint->is_stay()) {
-        //stay_constraint_table_[constraint->variables()[0]] = constraint.get();
         stay_constraint_table_.insert({constraint->variables()[0], constraint.get()});
     }
     constraints_.push_back(std::move(constraint));
@@ -54,7 +53,6 @@ void ConstraintGraph::update_values() {
 
 void ConstraintGraph::collect_methods(Variable* from, std::vector<Method*>& topsort, std::unordered_map<Variable*, bool>& visited) {
     visited[from] = true;
-    // от visited - куда?
     for (Method* method : from->edges()) {
         if (!visited[method->outputs()[0]]) {
             collect_methods(method->outputs()[0], topsort, visited);
