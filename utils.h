@@ -1,17 +1,11 @@
-template <typename... D>
-struct Data{};
+#pragma once
+template<typename... D>
+struct Data {};
 
-template <typename... D>
-struct Value{};
+template<typename... D>
+struct Value {};
 
-template <typename... D>
-struct Output{};
+template<typename... D>
+struct Output {};
 
-enum Belong {
-    DataVariable,
-    ValueVariable,
-    OutputVariable,
-    Default
-};
-
-const int INF = 1e9;
+enum class Belong { DataVariable, ValueVariable, OutputVariable, Default };
