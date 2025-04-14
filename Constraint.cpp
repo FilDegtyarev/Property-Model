@@ -1,6 +1,7 @@
 #include "Constraint.h"
 #include <cassert>
 
+namespace NSPropertyModel::detail {
 StatusType operator|(StatusType first, StatusType second) {
 	return StatusType((unsigned int)(first) | (unsigned int)(second));
 }
@@ -54,12 +55,16 @@ void Constraint::unsatisfy() {
 	selected_method_->unsatisfy_method();
 }
 
-const Method* Constraint::operator[](int index) const {
+const Method* Constraint::method(int index) const {
 	return methods_[index].get();
 }
 
-Method* Constraint::operator[](int index) {
+Method* Constraint::method(int index) {
 	return methods_[index].get();
+}
+
+Variable* Constraint::output() const {
+	return selected_method_->output();
 }
 
 bool Constraint::is_stay() const {
@@ -86,7 +91,7 @@ std::unique_ptr<Constraint> Constraint::make_stay_constraint(Variable* variable,
 	assert(variable);
 	std::vector<Variable*> stay_variable = {variable};
 	std::unique_ptr<Constraint> new_stay =
-		std::make_unique<Constraint>(stay_variable, Priority{priority}, StatusType{Status::enabled | Status::stay});
+		std::make_unique<Constraint>(stay_variable, Priority{priority}, Status::enabled | Status::stay);
 
 	std::function<void()> stay_function = []() { return; };
 	new_stay->add_method(
@@ -94,3 +99,4 @@ std::unique_ptr<Constraint> Constraint::make_stay_constraint(Variable* variable,
 
 	return new_stay;
 }
+} // namespace NSPropertyModel::detail

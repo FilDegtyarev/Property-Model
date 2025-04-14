@@ -1,6 +1,9 @@
 #pragma once
 #include "ConstraintGraph.h"
 #include "Deltablue.h"
+#include <iostream>
+
+namespace NSPropertyModel::detail {
 template<typename A, typename B, typename C>
 class PMBuilder;
 
@@ -43,7 +46,7 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 		std::cout << name << " -> " << value << '\n';
 		Variable* variable = variables_[name];
 		// Подключили stay
-		DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_stay(variable));
+		DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_index_of_stay(variable));
 
 		variable->load_data(std::move(value));
 		constraint_graph_.update_values();
@@ -60,30 +63,26 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 	}
 
   private:
-	PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArgs...>>() = default;
+	PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArgs...>>() noexcept = default;
 
 	template<Belong B, typename T>
 	void add_variable(std::string name, T value) {
 		Variable* pointer = constraint_graph_.add_variable(B, name, value);
 		variables_.insert({name, pointer});
-		switch (B) {
-		case Belong::DataVariable:
+
+		if constexpr (B == Belong::DataVariable) {
 			data_.push_back(std::move(name));
-			break;
-		case Belong::ValueVariable:
+		} else if constexpr (B == Belong::ValueVariable) {
 			value_.push_back(std::move(name));
-			break;
-		case Belong::OutputVariable:
+		} else if constexpr (B == Belong::OutputVariable) {
 			output_.push_back(std::move(name));
-			break;
-		case Belong::Default:
-			assert(false);
 		}
 	}
 
-	std::vector<Variable*> bind_variables(std::vector<std::string> names) {
+	std::vector<Variable*> bind_variables(const std::vector<std::string>& names) {
 		std::vector<Variable*> references;
-		for (auto&& name : names) {
+		references.reserve(names.size());
+		for (const std::string& name : names) {
 			references.push_back(variables_[name]);
 		}
 		return references;
@@ -97,31 +96,25 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 	}
 
 	template<typename... Types, typename... OutputTypes>
-	std::function<void()> bind_method(std::function<std::tuple<OutputTypes...>(Types...)> function,
+	std::function<void()> bind_method(std::function<std::tuple<OutputTypes...>(Types...)>&& function,
 									  std::vector<std::string> inputs, std::vector<std::string> outputs) {
-		std::vector<Variable*> input_variables;
-		for (int i = 0; i < inputs.size(); ++i) {
-			input_variables.push_back(variables_[inputs[i]]);
-		}
+		std::vector<Variable*> input_variables = bind_variables(inputs);
+		std::vector<Variable*> output_variables = bind_variables(outputs);
 
-		std::vector<Variable*> output_variables;
-		for (int i = 0; i < outputs.size(); ++i) {
-			output_variables.push_back(variables_[output_[i]]);
-		}
+		std::function<void()> method =
+			(([this, function = std::move(function), inputs = std::move(inputs), outputs = std::move(outputs)]() {
+				int i = 0;
+				auto index_sequence = std::make_integer_sequence<int, std::tuple_size<std::tuple<Types...>>::value>{};
+				std::tuple<Types...> args = get_arguements<Types...>(inputs, std::move(index_sequence));
+				std::tuple<OutputTypes...> result = std::apply(function, args);
 
-		std::function<void()> method = (([this, function, inputs, outputs]() {
-			int i = 0;
-			auto index_sequence = std::make_integer_sequence<int, std::tuple_size<std::tuple<Types...>>::value>{};
-			std::tuple<Types...> args = get_arguements<Types...>(inputs, std::move(index_sequence));
-			std::tuple<OutputTypes...> result = std::apply(function, args);
-
-			std::apply(
-				[this, outputs, result](auto&&... args) {
-					int j = 0;
-					((variables_[outputs[j++]]->load_data(std::forward<decltype(args)>(args))), ...);
-				},
-				result);
-		}));
+				std::apply(
+					[this, outputs, result](auto&&... args) {
+						int j = 0;
+						((variables_[outputs[j++]]->load_data(std::forward<decltype(args)>(args))), ...);
+					},
+					result);
+			}));
 		return method;
 	}
 
@@ -130,7 +123,7 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 	}
 
 	void add_stay_constraints() {
-		for (auto&& [name, variable] : variables_) {
+		for (const auto& [name, variable] : variables_) {
 			constraint_graph_.add_constraint(
 				Constraint::make_stay_constraint(variable, constraint_graph_.new_stay_priority()));
 			constraint_graph_.define_by_stay(variable);
@@ -149,8 +142,7 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 	std::vector<std::string> data_;
 	std::vector<std::string> value_;
 	std::vector<std::string> output_;
-
 	std::unordered_map<std::string, Variable*> variables_;
-
 	ConstraintGraph constraint_graph_;
 };
+} // namespace NSPropertyModel::detail

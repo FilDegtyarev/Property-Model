@@ -3,6 +3,7 @@
 #include <functional>
 #include <vector>
 
+namespace NSPropertyModel::detail {
 class Constraint;
 
 struct Method {
@@ -14,6 +15,8 @@ struct Method {
 	void unsatisfy_method();
 	const Constraint* associated_constraint() const;
 	Constraint* associated_constraint();
+	const Variable* output() const;
+	Variable* output();
 	const std::vector<Variable*> inputs() const;
 	const std::vector<Variable*> outputs() const;
 	bool is_chosen() const;
@@ -24,3 +27,4 @@ struct Method {
 	std::vector<Variable*> outputs_;
 	Constraint* associated_constraint_;
 };
+} // namespace NSPropertyModel::detail

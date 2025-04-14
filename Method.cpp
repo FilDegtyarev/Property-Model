@@ -1,6 +1,8 @@
 #include "Method.h"
 #include "Constraint.h"
+#include <cassert>
 
+namespace NSPropertyModel::detail {
 Method::Method(std::function<void()> method, std::vector<Variable*> inputs, std::vector<Variable*> outputs,
 			   Constraint* associated_constraint)
 	: method_(std::move(method)), inputs_(std::move(inputs)), outputs_(std::move(outputs)),
@@ -39,6 +41,16 @@ Constraint* Method::associated_constraint() {
 	return associated_constraint_;
 }
 
+const Variable* Method::output() const {
+	assert(associated_constraint_);
+	return outputs_[0];
+}
+
+Variable* Method::output() {
+	assert(associated_constraint_);
+	return outputs_[0];
+}
+
 const std::vector<Variable*> Method::inputs() const {
 	return inputs_;
 }
@@ -50,3 +62,4 @@ const std::vector<Variable*> Method::outputs() const {
 bool Method::is_chosen() const {
 	return associated_constraint()->selected_method() == this;
 }
+} // namespace NSPropertyModel::detail

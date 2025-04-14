@@ -1,4 +1,5 @@
 #pragma once
+namespace NSPropertyModel {
 template<typename... D>
 struct Data {};
 
@@ -8,4 +9,5 @@ struct Value {};
 template<typename... D>
 struct Output {};
 
-enum class Belong { DataVariable, ValueVariable, OutputVariable, Default };
+enum class Belong { DataVariable, ValueVariable, OutputVariable };
+} // namespace NSPropertyModel

@@ -1,4 +1,7 @@
 #include "ConstraintGraph.h"
+#include <cassert>
+
+namespace NSPropertyModel::detail {
 
 void ConstraintGraph::add_constraint(std::unique_ptr<Constraint>&& constraint) {
 	if (constraint->is_stay()) {
@@ -29,7 +32,8 @@ int ConstraintGraph::new_stay_priority() {
 	return --stay_constraint_priority;
 }
 
-int ConstraintGraph::find_stay(Variable* variable) {
+int ConstraintGraph::find_index_of_stay(Variable* variable) {
+	assert(variable);
 	for (int constraint_index = 0; constraint_index < constraints_.size(); ++constraint_index) {
 		Constraint* constraint = constraints_[constraint_index].get();
 		if (constraint->is_stay() && constraint->variables()[0] == variable) {
@@ -41,12 +45,12 @@ int ConstraintGraph::find_stay(Variable* variable) {
 
 void ConstraintGraph::update_values() {
 	std::unordered_map<Variable*, bool> visited;
-	for (std::unique_ptr<Variable>& variable : variables_) {
+	for (const std::unique_ptr<Variable>& variable : variables_) {
 		visited[variable.get()] = false;
 	}
 
 	std::vector<Method*> topsort;
-	for (std::unique_ptr<Variable>& variable : variables_) {
+	for (const std::unique_ptr<Variable>& variable : variables_) {
 		if (!visited[variable.get()]) {
 			collect_methods(variable.get(), topsort, visited);
 		}
@@ -54,20 +58,20 @@ void ConstraintGraph::update_values() {
 
 	std::reverse(topsort.begin(), topsort.end());
 
-	for (Method* method : topsort) {
-		assert(method);
+	for (const Method* method : topsort) {
 		method->execute();
 	}
-	return;
 }
 
 void ConstraintGraph::collect_methods(Variable* from, std::vector<Method*>& topsort,
 									  std::unordered_map<Variable*, bool>& visited) {
+	assert(from);
 	visited[from] = true;
-	for (Method* method : from->edges()) {
+	for (const Method* method : from->edges()) {
 		if (!visited[method->outputs()[0]]) {
 			collect_methods(method->outputs()[0], topsort, visited);
 		}
 	}
 	topsort.push_back(from->defining_method());
 }
+} // namespace NSPropertyModel::detail

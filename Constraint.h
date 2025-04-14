@@ -1,18 +1,10 @@
 #pragma once
 #include "Method.h"
-#include <algorithm>
-#include <any>
-#include <cassert>
-#include <functional>
-#include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <string>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
+namespace NSPropertyModel::detail {
 struct Status {
 	enum type : unsigned int { satisfied = 1, enabled = 2, stay = 4 };
 };
@@ -33,8 +25,9 @@ class Constraint {
 	void satisfy(Method* method);
 	void unsatisfy();
 	void disable();
-	const Method* operator[](int index) const;
-	Method* operator[](int index);
+	const Method* method(int index) const;
+	Method* method(int index);
+	Variable* output() const;
 	bool is_stay() const;
 	bool is_enable() const;
 	bool is_satisfied() const;
@@ -49,3 +42,4 @@ class Constraint {
 	int priority_;
 	Method* selected_method_;
 };
+} // namespace NSPropertyModel::detail

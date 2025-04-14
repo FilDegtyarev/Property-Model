@@ -30,6 +30,9 @@ std::tuple<std::string> output(int absolute_h, int absolute_w) {
 }
 
 void dialog_test() {
+	using namespace NSPropertyModel::detail;
+	using namespace NSPropertyModel;
+
 	using DataVars = Data<int, int>;
 	using ValueVars = Value<int, int, int, int>;
 	using OutputVars = Output<std::string>;
@@ -57,24 +60,20 @@ void dialog_test() {
 
 	pmb.add_variable<Belong::OutputVariable, std::string>("output", "1000 2000");
 
-	pmb.add_constraint({"relative_w", "initial_w", "absolute_w"}, 0, true);
-	pmb.add_method(abs_w, {"relative_w", "initial_w"}, {"absolute_w"});
-	pmb.add_method(rel_w, {"absolute_w", "initial_w"}, {"relative_w"});
+	pmb.add_constraint({"relative_w", "initial_w", "absolute_w"}, Priority{0}, true);
+	pmb.add_method(std::move(abs_w), {"relative_w", "initial_w"}, {"absolute_w"});
+	pmb.add_method(std::move(rel_w), {"absolute_w", "initial_w"}, {"relative_w"});
 
-	pmb.add_constraint({"relative_h", "initial_h", "absolute_h"}, 0, true);
-	pmb.add_method(abs_h, {"relative_h", "initial_h"}, {"absolute_h"});
-	pmb.add_method(rel_h, {"absolute_h", "initial_h"}, {"relative_h"});
+	pmb.add_constraint({"relative_h", "initial_h", "absolute_h"}, Priority{0}, true);
+	pmb.add_method(std::move(abs_h), {"relative_h", "initial_h"}, {"absolute_h"});
+	pmb.add_method(std::move(rel_h), {"absolute_h", "initial_h"}, {"relative_h"});
 
-	pmb.add_constraint({"relative_h", "relative_w"}, 0, false);
-	pmb.add_method(pr_h, {"relative_w"}, {"relative_h"});
-	pmb.add_method(pr_w, {"relative_h"}, {"relative_w"});
+	pmb.add_constraint({"relative_h", "relative_w"}, Priority{0}, false);
+	pmb.add_method(std::move(pr_h), {"relative_w"}, {"relative_h"});
+	pmb.add_method(std::move(pr_w), {"relative_h"}, {"relative_w"});
 
-	pmb.add_constraint({"absolute_h", "absolute_w", "output"}, 0, true);
-	pmb.add_method(out, {"absolute_h", "absolute_w"}, {"output"});
-
-	pmb.add_constraint({"relative_h", "relative_w"}, 0, false);
-	pmb.add_method(pr_w, {"relative_h"}, {"relative_w"});
-	pmb.add_method(pr_h, {"relative_w"}, {"relative_h"});
+	pmb.add_constraint({"absolute_h", "absolute_w", "output"}, Priority{0}, true);
+	pmb.add_method(std::move(out), {"absolute_h", "absolute_w"}, {"output"});
 
 	auto pm = pmb.extract();
 	pm.show(true);
@@ -88,7 +87,7 @@ void dialog_test() {
 	pm.set<int>("relative_w", 20);
 	pm.show(true);
 
-	pm->rough_enable(4);
+	pm->rough_enable(2);
 	pm.show(true);
 }
 } // namespace

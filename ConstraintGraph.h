@@ -1,7 +1,9 @@
 #pragma once
 #include "Constraint.h"
 #include <algorithm>
+#include <cassert>
 
+namespace NSPropertyModel::detail {
 class ConstraintGraph {
   public:
 	friend DeltaBlue;
@@ -21,8 +23,7 @@ class ConstraintGraph {
 	void define_by_stay(Variable* variable);
 	int constraints_count() const;
 	int new_stay_priority();
-	// Это костыль
-	int find_stay(Variable* variable);
+	int find_index_of_stay(Variable* variable);
 	void update_values();
 
   private:
@@ -31,8 +32,7 @@ class ConstraintGraph {
 
 	std::vector<std::unique_ptr<Variable>> variables_;
 	std::vector<std::unique_ptr<Constraint>> constraints_;
-
 	std::unordered_map<Variable*, Constraint*> stay_constraint_table_;
-
 	int stay_constraint_priority = k_inf;
 };
+} // namespace NSPropertyModel::detail

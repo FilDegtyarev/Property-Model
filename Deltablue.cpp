@@ -1,8 +1,10 @@
 #include "Deltablue.h"
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
 
+namespace NSPropertyModel::detail {
 void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unordered_map<Variable*, bool>& visited) {
 	assert(from);
 	visited[from] = true;
@@ -16,7 +18,7 @@ void DeltaBlue::recalculate_forces(ConstraintGraph& g, Variable* from, std::unor
 
 	from->force_ = new_force;
 
-	for (Method* output_method : from->edges_to_methods_) {
+	for (const Method* output_method : from->edges_to_methods_) {
 		Variable* to = output_method->outputs()[0];
 		if (!visited[to]) {
 			recalculate_forces(g, to, visited);
@@ -28,7 +30,7 @@ void DeltaBlue::detect_cycle(ConstraintGraph& g, Variable* from, std::unordered_
 	assert(from);
 	visited[from] = 1;
 
-	for (Method* output : from->edges_to_methods_) {
+	for (const Method* output : from->edges_to_methods_) {
 		Variable* to = output->outputs()[0];
 
 		if (visited[to] == 1) {
@@ -45,13 +47,7 @@ void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
 	int end_force = from->force_;
 	Variable* current_variable = from;
 	std::vector<Method*> path;
-	while (true) {
-		if (current_variable->defining_constraint()->priority() == end_force) {
-			current_variable->defining_constraint()->unsatisfy();
-			g.define_by_stay(current_variable);
-			break;
-		}
-
+	while (current_variable->defining_constraint()->priority() != end_force) {
 		for (const std::unique_ptr<Method>& method_ptr : current_variable->defining_constraint()->methods()) {
 			Method* method = method_ptr.get();
 			if (method->outputs()[0]->force_ == end_force && (!method->is_chosen())) {
@@ -61,6 +57,9 @@ void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
 			}
 		}
 	}
+
+	current_variable->defining_constraint()->unsatisfy();
+	g.define_by_stay(current_variable);
 
 	std::reverse(path.begin(), path.end());
 	for (Method* method : path) {
@@ -72,7 +71,7 @@ void DeltaBlue::reverse_path(ConstraintGraph& g, Variable* from) {
 void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
 	Constraint* new_constraint = g[index];
 	bool is_blocked = false;
-	for (Variable* variable : new_constraint->variables()) {
+	for (const Variable* variable : new_constraint->variables()) {
 		if (variable->force_ > new_constraint->priority()) {
 			is_blocked = true;
 		}
@@ -83,9 +82,10 @@ void DeltaBlue::enable_constraint(ConstraintGraph& g, int index) {
 		return;
 	}
 
-	Method* chosen_method = (*new_constraint)[0];
+	Method* chosen_method = (*new_constraint).method(0);
 	for (const std::unique_ptr<Method>& method_ptr : new_constraint->methods()) {
-		if (chosen_method->outputs()[0]->force_ < method_ptr.get()->outputs()[0]->force_) {
+		assert(chosen_method->output());
+		if (chosen_method->output()->force() < method_ptr->output()->force()) {
 			chosen_method = method_ptr.get();
 		}
 	}
@@ -135,3 +135,4 @@ void DeltaBlue::disable_constraint(ConstraintGraph& g, int index) {
 		}
 	}
 }
+} // namespace NSPropertyModel::detail

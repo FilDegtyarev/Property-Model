@@ -1,4 +1,5 @@
 #include "Constraint.h"
+namespace NSPropertyModel::detail {
 void Variable::determine(Method* method) {
 	determined_by = method;
 }
@@ -41,3 +42,4 @@ void Variable::remove_edge_to(Method* method) {
 		edges_to_methods_.erase(iter_to_delete);
 	}
 }
+} // namespace NSPropertyModel::detail

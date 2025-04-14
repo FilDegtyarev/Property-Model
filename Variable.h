@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+namespace NSPropertyModel::detail {
 struct Method;
 class Constraint;
 class DeltaBlue;
@@ -45,3 +46,4 @@ struct Variable {
 	int force_ = k_inf;
 	std::vector<Method*> edges_to_methods_;
 };
+} // namespace NSPropertyModel::detail
