@@ -13,37 +13,15 @@ class PropertyModelImpl;
 template<typename... DataArgs, typename... ValueArgs, typename... OutputArgs>
 class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArgs...>> {
   public:
+	using Result = std::tuple<OutputArgs...>;
 	friend PMBuilder<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArgs...>>;
-
-	void show(bool debug) {
-		std::cout << "\nProperty Model current state:\n";
-		std::cout << "-----------------------------\n";
-		if (debug) {
-			std::cout << "Data:\n";
-			int i = 0;
-			((std::cout << '\t' << data_[i] << ": " << std::any_cast<DataArgs>(variables_[data_[i++]]->value())
-						<< '\n'),
-			 ...);
-
-			std::cout << "Value:\n";
-			i = 0;
-			((std::cout << '\t' << value_[i] << ": " << std::any_cast<ValueArgs>(variables_[value_[i++]]->value())
-						<< '\n'),
-			 ...);
-		}
-
-		std::cout << "Output:\n";
-		int i = 0;
-		((std::cout << '\t' << output_[i] << ": " << std::any_cast<OutputArgs>(variables_[output_[i++]]->value())
-					<< '\n'),
-		 ...);
-		std::cout << "-----------------------------\n";
-	}
+	friend class DebugStream;
+	friend class ReleaseStream;
 
 	template<typename T>
 	void set(std::string name, T value) {
 		// Этой строчки нет в финальной версии
-		std::cout << name << " -> " << value << '\n';
+		// std::cout << name << " -> " << value << '\n';
 		Variable* variable = variables_[name];
 		// Подключили stay
 		DeltaBlue::disable_constraint(constraint_graph_, constraint_graph_.find_index_of_stay(variable));
@@ -60,6 +38,12 @@ class PropertyModelImpl<Data<DataArgs...>, Value<ValueArgs...>, Output<OutputArg
 	void rough_disable(int index) {
 		DeltaBlue::disable_constraint(constraint_graph_, index);
 		constraint_graph_.update_values();
+	}
+
+	Result extract_data() {
+		auto index_sequence = std::make_integer_sequence<int, std::tuple_size<std::tuple<OutputArgs...>>::value>{};
+		Result result = std::make_tuple(std::any_cast<OutputArgs>(variables_[output_[index_sequence]]->value())...);
+		return result;
 	}
 
   private:

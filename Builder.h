@@ -1,6 +1,6 @@
 #pragma once
+#include "PrettyPrint.h"
 #include "PropertyModel.h"
-
 namespace NSPropertyModel::detail {
 template<typename A, typename B, typename C>
 class PMBuilder;

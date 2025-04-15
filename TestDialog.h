@@ -1,35 +1,36 @@
+#pragma once
 #include "Builder.h"
 
-namespace {
-std::tuple<int> absolute_w(int relate_width, int initial_width) {
+namespace Tests::Dialog {
+static std::tuple<int> absolute_w(int relate_width, int initial_width) {
 	return std::make_tuple(initial_width * relate_width / 100);
 }
 
-std::tuple<int> relative_w(int absoulute_width, int initial_width) {
+static std::tuple<int> relative_w(int absoulute_width, int initial_width) {
 	return std::make_tuple((absoulute_width * 100) / initial_width);
 }
 
-std::tuple<int> absolute_h(int relate_height, int initial_height) {
+static std::tuple<int> absolute_h(int relate_height, int initial_height) {
 	return std::make_tuple(initial_height * relate_height / 100);
 }
 
-std::tuple<int> relative_h(int absolute_height, int initial_height) {
+static std::tuple<int> relative_h(int absolute_height, int initial_height) {
 	return std::make_tuple((absolute_height * 100) / initial_height);
 }
 
-std::tuple<int> preserve_relative_h(int relative_w) {
+static std::tuple<int> preserve_relative_h(int relative_w) {
 	return relative_w;
 }
 
-std::tuple<int> preserve_relative_w(int relative_h) {
+static std::tuple<int> preserve_relative_w(int relative_h) {
 	return relative_h;
 }
 
-std::tuple<std::string> output(int absolute_h, int absolute_w) {
+static std::tuple<std::string> output(int absolute_h, int absolute_w) {
 	return std::make_tuple(std::to_string(absolute_h) + " " + std::to_string(absolute_w));
 }
 
-void dialog_test() {
+static void run_dialog_test() {
 	using namespace NSPropertyModel::detail;
 	using namespace NSPropertyModel;
 
@@ -76,21 +77,18 @@ void dialog_test() {
 	pmb.add_method(std::move(out), {"absolute_h", "absolute_w"}, {"output"});
 
 	auto pm = pmb.extract();
-	pm.show(true);
+	std::cout << Debug << pm;
 
-	pm.set<int>("relative_h", 50);
-	pm.show(true);
+	pm->set<int>("relative_h", 50);
+	std::cout << Debug << pm;
 
-	pm.set<int>("absolute_w", 200);
-	pm.show(true);
+	pm->set<int>("absolute_w", 200);
+	std::cout << Debug << pm;
 
-	pm.set<int>("relative_w", 20);
-	pm.show(true);
+	pm->set<int>("relative_w", 20);
+	std::cout << Debug << pm;
 
 	pm->rough_enable(2);
-	pm.show(true);
+	std::cout << Debug << pm;
 }
-} // namespace
-int main() {
-	dialog_test();
-}
+} // namespace Tests::Dialog
